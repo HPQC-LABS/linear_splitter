@@ -155,7 +155,6 @@ unsigned Hamiltonian::cost()
     return h_cost; 
 }
 
-
 unsigned split(Hamiltonian* h)
 {
     std::vector<Hamiltonian*> stack;

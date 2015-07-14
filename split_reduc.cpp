@@ -4,8 +4,8 @@
 //Compile with
 //g++ split_reduc.cpp algorithms.cpp hamiltonian.cpp -o split_reduc -std=c++11
 
-int main(int argc, char* argv[]){
-    
+int main(int argc, char* argv[])
+{
     if(argc >=4)
     {
         std::istringstream streamm( argv[1] ), streamn( argv[2] ), streamN( argv[3] );
