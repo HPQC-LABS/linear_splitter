@@ -19,5 +19,6 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& x)
 }
 
 map_iterator max_map_value(map_iterator, map_iterator);
+unsigned number_of_simple_nodes(std::vector<bool>);
 
 #endif

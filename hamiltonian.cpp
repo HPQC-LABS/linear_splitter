@@ -164,7 +164,7 @@ bool all_nodes_are_simple(std::vector<bool> thread_states)
 
 unsigned split(Hamiltonian* h)
 {
-    std::vector<Hamiltonian*> stack(1,h);
+    std::vector<Hamiltonian*> stack;
     std::vector<Hamiltonian*> tstack;
     Hamiltonian* thread_node = NULL;
     Hamiltonian* temp_left_pointer = NULL;
@@ -172,31 +172,41 @@ unsigned split(Hamiltonian* h)
     unsigned number_of_hamiltonians = 0;
     unsigned tn,nthreads;
     std::vector<bool> thread_states;
+    double percent = 0.75;
+    unsigned allocate;
 
-    #pragma omp parallel shared(nthreads,thread_states,stack,number_of_hamiltonians) firstprivate(tn,thread_node,tstack,temp_left_pointer,temp_right_pointer)
+    #pragma omp parallel shared(nthreads,thread_states,stack,number_of_hamiltonians) firstprivate(tn,thread_node,tstack,temp_left_pointer,temp_right_pointer,allocate,percent)
     {
         tn = omp_get_thread_num();
         #pragma omp single 
         {
             nthreads = omp_get_num_threads();
-            thread_states.resize(nthreads);
+            thread_states.resize(nthreads,true);
+            thread_node = h;
+            thread_states[tn]=false;
         }
         
         while(!all_nodes_are_simple(thread_states))
         {
             if(thread_node==NULL)
             {
-                #pragma omp critical
+                //Include repeated if statements to avoid having to unneccessarily enter a critical section of the code
+                if(stack.size()>0)
                 {
-                    if(stack.size()>0)
+                    #pragma omp critical
                     {
-                        thread_node = stack.back();
-                        stack.pop_back(); 
-                        thread_states[tn]=false;
-                    }
-                    else
-                    {
-                        thread_states[tn]=true;
+                        if(stack.size()>0)
+                        {
+                            if(number_of_simple_nodes(thread_states)>0)
+                            {
+                                allocate = ceil(stack.size()/number_of_simple_nodes(thread_states));
+                                std::cout << allocate << std::endl;
+                                tstack.insert(tstack.end(),stack.begin(),stack.begin()+allocate-1);
+                                thread_node = *(stack.begin()+allocate);
+                                stack.erase(stack.begin(),stack.begin()+allocate);
+                                thread_states[tn] = false;
+                            }
+                        }
                     }
                 }
             }
@@ -214,9 +224,11 @@ unsigned split(Hamiltonian* h)
                     {
                         if(stack.size()>0)
                         {
-                            thread_node = stack.back();
-                            stack.pop_back(); 
-                            thread_states[tn]=false;
+                            allocate = ceil(stack.size()/(number_of_simple_nodes(thread_states)+1));
+                            std::cout << allocate << std::endl;
+                            tstack.insert(tstack.end(),stack.begin(),stack.begin()+allocate-1);
+                            thread_node = *(stack.begin()+allocate);
+                            stack.erase(stack.begin(),stack.begin()+allocate);
                         }
                         else
                         {
@@ -234,18 +246,17 @@ unsigned split(Hamiltonian* h)
             {
                 temp_left_pointer = thread_node->split_left();
                 temp_right_pointer = thread_node->split_right();
+                tstack.push_back(temp_right_pointer);
                 if(stack.size()==0)
                 {
-                    #pragma omp critical
+                    if(tstack.size()>100)
                     {
-                        stack.push_back(temp_right_pointer);
-                    }
-                }
-                else
-                {
-                    #pragma omp critical
-                    {
-                        tstack.push_back(temp_right_pointer);
+                        #pragma omp critical
+                        {
+                            allocate = floor(tstack.size()*percent);
+                            stack.insert(stack.end(),tstack.begin(),tstack.begin()+allocate);
+                            tstack.erase(tstack.begin(),tstack.begin()+allocate);
+                        }
                     }
                 }
                 delete thread_node;
