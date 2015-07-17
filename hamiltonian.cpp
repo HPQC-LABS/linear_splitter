@@ -164,24 +164,24 @@ bool all_nodes_are_simple(std::vector<bool> thread_states)
 
 unsigned split(Hamiltonian* h)
 {
-    std::vector<Hamiltonian*> stack;
+    std::vector<Hamiltonian*> stack(1,h);
     std::vector<Hamiltonian*> tstack;
-    Hamiltonian* thread_node=NULL;
-    Hamiltonian* temp_pointer = NULL;
+    Hamiltonian* thread_node = NULL;
+    Hamiltonian* temp_left_pointer = NULL;
+    Hamiltonian* temp_right_pointer = NULL;
     unsigned number_of_hamiltonians = 0;
     unsigned tn,nthreads;
     std::vector<bool> thread_states;
 
-    #pragma omp parallel shared(nthreads,thread_states,stack,number_of_hamiltonians) private(tn,thread_node,tstack,temp_pointer)
+    #pragma omp parallel shared(nthreads,thread_states,stack,number_of_hamiltonians) firstprivate(tn,thread_node,tstack,temp_left_pointer,temp_right_pointer)
     {
+        tn = omp_get_thread_num();
         #pragma omp single 
         {
             nthreads = omp_get_num_threads();
             thread_states.resize(nthreads);
-            thread_node = h;
-            //#pragma omp flush (nthreads,thread_states)
         }
-        tn = omp_get_thread_num();
+        
         while(!all_nodes_are_simple(thread_states))
         {
             if(thread_node==NULL)
@@ -206,6 +206,7 @@ unsigned split(Hamiltonian* h)
                 {
                     ++number_of_hamiltonians;
                     delete thread_node;
+                    thread_node = NULL;
                 }
                 if(tstack.size()==0)
                 {
@@ -231,20 +232,24 @@ unsigned split(Hamiltonian* h)
             }
             else
             {
-                temp_pointer = thread_node->split_left();
+                temp_left_pointer = thread_node->split_left();
+                temp_right_pointer = thread_node->split_right();
                 if(stack.size()==0)
                 {
                     #pragma omp critical
                     {
-                        stack.push_back(thread_node->split_right());
+                        stack.push_back(temp_right_pointer);
                     }
                 }
                 else
                 {
-                    tstack.push_back(thread_node->split_right());
+                    #pragma omp critical
+                    {
+                        tstack.push_back(temp_right_pointer);
+                    }
                 }
                 delete thread_node;
-                thread_node = temp_pointer;
+                thread_node = temp_left_pointer;
             }
         }
     }
