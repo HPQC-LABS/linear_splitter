@@ -12,6 +12,7 @@
 #include <map>
 #include <sstream>
 #include <cassert>
+#include <omp.h>
 
 typedef std::pair<std::vector<unsigned>, int> edge_type;
 
@@ -38,6 +39,7 @@ private:
     std::size_t counter_;
 };
 
+bool all_nodes_are_simple(std::vector<bool>);
 unsigned split(Hamiltonian*);
 
 #endif

@@ -65,8 +65,7 @@ Hamiltonian* Hamiltonian::split_right()
             if(j!=i)
             {
                 temp_edges[j].second += temp_edges[i].second;
-                temp_edges.erase(temp_edges.begin()+i);
-                if(temp_edges[j].second == 0)
+                temp_edges.erase(temp_edges.begin()+i); if(temp_edges[j].second == 0)
                 {
                     temp_edges.erase(temp_edges.begin()+j);
                     --i;
@@ -155,28 +154,98 @@ unsigned Hamiltonian::cost()
     return h_cost; 
 }
 
+bool all_nodes_are_simple(std::vector<bool> thread_states)
+{
+    for(unsigned i = 0; i < thread_states.size(); ++i)
+        if(thread_states[i]==false)
+            return false;
+    return true;
+}
+
 unsigned split(Hamiltonian* h)
 {
     std::vector<Hamiltonian*> stack;
-    Hamiltonian* current_node = h;
+    std::vector<Hamiltonian*> tstack;
+    Hamiltonian* thread_node=NULL;
     Hamiltonian* temp_pointer = NULL;
-    unsigned number_of_hamiltonians = 1;
+    unsigned number_of_hamiltonians = 0;
+    unsigned tn,nthreads;
+    std::vector<bool> thread_states;
 
-    while((!current_node->is_simple())||(stack.size()>0))
+    #pragma omp parallel shared(nthreads,thread_states,stack,number_of_hamiltonians) private(tn,thread_node,tstack,temp_pointer)
     {
-        if(current_node->is_simple())
+        #pragma omp single 
         {
-            ++number_of_hamiltonians;
-            delete current_node;
-            current_node = stack.back();
-            stack.pop_back();
+            nthreads = omp_get_num_threads();
+            thread_states.resize(nthreads);
+            thread_node = h;
+            //#pragma omp flush (nthreads,thread_states)
         }
-        else
+        tn = omp_get_thread_num();
+        while(!all_nodes_are_simple(thread_states))
         {
-            temp_pointer = current_node->split_left();
-            stack.push_back(current_node->split_right());
-            delete current_node;
-            current_node = temp_pointer;
+            if(thread_node==NULL)
+            {
+                #pragma omp critical
+                {
+                    if(stack.size()>0)
+                    {
+                        thread_node = stack.back();
+                        stack.pop_back(); 
+                        thread_states[tn]=false;
+                    }
+                    else
+                    {
+                        thread_states[tn]=true;
+                    }
+                }
+            }
+            else if(thread_node->is_simple())
+            {
+                #pragma omp critical
+                {
+                    ++number_of_hamiltonians;
+                    delete thread_node;
+                }
+                if(tstack.size()==0)
+                {
+                    #pragma omp critical
+                    {
+                        if(stack.size()>0)
+                        {
+                            thread_node = stack.back();
+                            stack.pop_back(); 
+                            thread_states[tn]=false;
+                        }
+                        else
+                        {
+                            thread_states[tn]=true;
+                        }
+                    }
+                }
+                else
+                {
+                    thread_node = tstack.back();
+                    tstack.pop_back();
+                }
+            }
+            else
+            {
+                temp_pointer = thread_node->split_left();
+                if(stack.size()==0)
+                {
+                    #pragma omp critical
+                    {
+                        stack.push_back(thread_node->split_right());
+                    }
+                }
+                else
+                {
+                    tstack.push_back(thread_node->split_right());
+                }
+                delete thread_node;
+                thread_node = temp_pointer;
+            }
         }
     }
     return number_of_hamiltonians;

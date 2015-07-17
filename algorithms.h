@@ -5,6 +5,9 @@
 
 #include <map>
 #include <vector>
+#include <iostream>
+#include <iterator>
+#include <sstream>
 
 typedef std::map<unsigned,unsigned>::iterator map_iterator;
 
