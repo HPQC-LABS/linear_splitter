@@ -171,15 +171,19 @@ unsigned split(Hamiltonian* h)
     unsigned tn,nthreads,request_node;
     TelephoneCenter gmail;
 
+    omp_set_dynamic(0);
+    omp_set_num_threads(8);
     #pragma omp parallel shared(number_of_hamiltonians,gmail) firstprivate(tn,tstack,temp_pointer,request_node,request_stack,thread_counter)
     {
         tn = omp_get_thread_num();
         #pragma omp single 
         {
             nthreads = omp_get_num_threads();
+            std::cout << "Initializing " << nthreads << " threads..." << std::endl;
             gmail.resize(nthreads);
             tstack.push_back(h);
             gmail.is_working[tn] = true;
+            std::cout << "Executing..." << std::endl;
         }
 
         while(!gmail.all_states_idle())
@@ -211,9 +215,8 @@ unsigned split(Hamiltonian* h)
                 request_node=gmail.check_first_email_sender(tn);
                 if(request_node!=gmail.end())
                 {
-                    if(tstack.size()>4)
+                    if(tstack.size()>1)
                     {
-                        #pragma omp critical
                         gmail.transfer(tn,request_node,&tstack);
                     }
                 }

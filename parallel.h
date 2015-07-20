@@ -8,6 +8,7 @@
 #include <iterator>
 #include <sstream>
 #include <random>
+#include <omp.h>
 
 class Hamiltonian;
 

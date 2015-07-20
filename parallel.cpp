@@ -42,6 +42,7 @@ void TelephoneCenter::send_email(int thread_number, std::vector<Hamiltonian*>* v
     {
         if(number_of_emails_sent(thread_number)==0)
         {
+            /*
             unsigned receiver,counter=0;
             
             //See resevoir sampling for explanation
@@ -52,6 +53,20 @@ void TelephoneCenter::send_email(int thread_number, std::vector<Hamiltonian*>* v
                     ++counter;
                     if(bernoulli(counter))
                         receiver=i;
+                }
+            }
+            */
+            unsigned receiver, min=nthreads,current;
+            for(unsigned i = 0; i < nthreads; ++i)
+            {
+                if(is_working[i])
+                {
+                    current = number_of_emails_in_inbox(i);
+                    if(current <= min)
+                    {
+                        receiver = i;
+                        min = current;
+                    }
                 }
             }
             emails[receiver][thread_number] = std::make_pair(true,vector_location);
@@ -67,16 +82,23 @@ void TelephoneCenter::transfer(int thread_number, int destination, std::vector<H
     {
         if(request_stack->size()==0)
         {
-            std::cout << "############INITIATING TRANSFER################" << std::endl;
+            /*
+            std::cout << "############INITIATING TRANSFER#################" << std::endl;
             std::cout << "Emails: " << number_of_emails_in_inbox(thread_number) << std::endl;
             std::cout << "Amount: " << transfer_amount << std::endl;
             std::cout << thread_number << " - sender size before: " << local_stack->size() << std::endl;
             std::cout << destination << " - receiver size before: " << request_stack->size() << std::endl;
-            request_stack->insert(request_stack->end(),local_stack->begin(),local_stack->begin()+transfer_amount);
-            local_stack->erase(local_stack->begin(),local_stack->begin()+transfer_amount);
+            */
+            #pragma omp critical 
+            {
+                request_stack->insert(request_stack->end(),local_stack->begin(),local_stack->begin()+transfer_amount);
+                local_stack->erase(local_stack->begin(),local_stack->begin()+transfer_amount);
+            }
+            /*
             std::cout << thread_number << " - sender size after: " << local_stack->size() << std::endl;
             std::cout << destination << " - receiver size after: " << request_stack->size() << std::endl;
             std::cout << "############TERMINATING TRANSFER################" << std::endl << std::endl;
+            */
 
             emails[thread_number][destination].first = false; 
             emails[thread_number][destination].second = NULL; 
