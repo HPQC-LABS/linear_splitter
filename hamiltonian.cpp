@@ -157,26 +157,25 @@ unsigned Hamiltonian::cost()
 
 unsigned split(Hamiltonian* h)
 {
-    std::vector<Hamiltonian*> stack;
-    Hamiltonian* current_node = h;
+    std::vector<Hamiltonian*> stack(1,h);
     Hamiltonian* temp_pointer = NULL;
-    unsigned number_of_hamiltonians = 1;
+    unsigned number_of_hamiltonians = 0;
 
-    while((!current_node->is_simple())||(stack.size()>0))
+    while(stack.size()>0)
     {
-        if(current_node->is_simple())
+        if(stack.back()->is_simple())
         {
             ++number_of_hamiltonians;
-            delete current_node;
-            current_node = stack.back();
+            delete stack.back();
             stack.pop_back();
         }
         else
         {
-            temp_pointer = current_node->split_left();
-            stack.push_back(current_node->split_right());
-            delete current_node;
-            current_node = temp_pointer;
+            temp_pointer = stack.back();
+            stack.pop_back();
+            stack.push_back(temp_pointer->split_right());
+            stack.push_back(temp_pointer->split_left());
+            delete temp_pointer;
         }
     }
     return number_of_hamiltonians;
