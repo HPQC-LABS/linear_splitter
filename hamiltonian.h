@@ -15,6 +15,7 @@
 #include <cassert>
 #include <omp.h>
 #include <math.h>
+#include <unistd.h>
 
 typedef std::pair<std::vector<unsigned>, int> edge_type;
 
