@@ -8,9 +8,9 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <random>
 
-typedef std::map<unsigned,unsigned>::iterator map_iterator;
-
+//Template for outputting vectors
 template <class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& x)
 {
@@ -18,7 +18,8 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& x)
             return os;
 }
 
+//Find index corresponding to max value in map
+typedef std::map<unsigned,unsigned>::iterator map_iterator;
 map_iterator max_map_value(map_iterator, map_iterator);
-unsigned number_of_simple_nodes(std::vector<bool>);
 
 #endif

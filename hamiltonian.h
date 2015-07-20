@@ -4,6 +4,7 @@
 #define HAMILTONIAN_H_INCLUDED 
 
 #include "algorithms.h"
+#include "parallel.h"
 #include <iostream>
 #include <fstream>
 #include <string>

@@ -164,103 +164,64 @@ bool all_nodes_are_simple(std::vector<bool> thread_states)
 
 unsigned split(Hamiltonian* h)
 {
-    std::vector<Hamiltonian*> stack;
     std::vector<Hamiltonian*> tstack;
-    Hamiltonian* thread_node = NULL;
-    Hamiltonian* temp_left_pointer = NULL;
-    Hamiltonian* temp_right_pointer = NULL;
+    std::vector<Hamiltonian*>* request_stack;
+    Hamiltonian* temp_pointer = NULL;
     unsigned number_of_hamiltonians = 0;
-    unsigned tn,nthreads;
-    std::vector<bool> thread_states;
-    double percent = 0.75;
-    unsigned allocate;
+    unsigned tn,nthreads,request_node;
+    TelephoneCenter gmail;
 
-    #pragma omp parallel shared(nthreads,thread_states,stack,number_of_hamiltonians) firstprivate(tn,thread_node,tstack,temp_left_pointer,temp_right_pointer,allocate,percent)
+    #pragma omp parallel shared(number_of_hamiltonians,gmail) firstprivate(tn,tstack,temp_pointer,request_node,request_stack)
     {
         tn = omp_get_thread_num();
         #pragma omp single 
         {
             nthreads = omp_get_num_threads();
-            thread_states.resize(nthreads,true);
-            thread_node = h;
-            thread_states[tn]=false;
+            gmail.resize(nthreads);
+            tstack.push_back(h);
+            gmail.is_working[tn] = true;
         }
-        
-        while(!all_nodes_are_simple(thread_states))
+
+        while(!gmail.all_states_idle())
         {
-            if(thread_node==NULL)
+            if(tstack.size()==0)
             {
-                //Include repeated if statements to avoid having to unneccessarily enter a critical section of the code
-                if(stack.size()>0)
-                {
-                    #pragma omp critical
-                    {
-                        if(stack.size()>0)
-                        {
-                            if(number_of_simple_nodes(thread_states)>0)
-                            {
-                                allocate = ceil(stack.size()/number_of_simple_nodes(thread_states));
-                                std::cout << allocate << std::endl;
-                                tstack.insert(tstack.end(),stack.begin(),stack.begin()+allocate-1);
-                                thread_node = *(stack.begin()+allocate);
-                                stack.erase(stack.begin(),stack.begin()+allocate);
-                                thread_states[tn] = false;
-                            }
-                        }
-                    }
-                }
+                gmail.is_working[tn] = false;
+                gmail.send_email(tn,&tstack);
             }
-            else if(thread_node->is_simple())
+            else if(tstack.back()->is_simple())
             {
+                //replace with local counter
                 #pragma omp critical
                 {
                     ++number_of_hamiltonians;
-                    delete thread_node;
-                    thread_node = NULL;
-                }
-                if(tstack.size()==0)
-                {
-                    #pragma omp critical
-                    {
-                        if(stack.size()>0)
-                        {
-                            allocate = ceil(stack.size()/(number_of_simple_nodes(thread_states)+1));
-                            std::cout << allocate << std::endl;
-                            tstack.insert(tstack.end(),stack.begin(),stack.begin()+allocate-1);
-                            thread_node = *(stack.begin()+allocate);
-                            stack.erase(stack.begin(),stack.begin()+allocate);
-                        }
-                        else
-                        {
-                            thread_states[tn]=true;
-                        }
-                    }
-                }
-                else
-                {
-                    thread_node = tstack.back();
+                    std::cout << "Instance 1.1: " << tn << " , " << tstack.back() << std::endl;
+                    delete tstack.back();
+                    std::cout << "Instance 1.2: " << tn << " , " << tstack.back() << std::endl;
                     tstack.pop_back();
                 }
             }
             else
             {
-                temp_left_pointer = thread_node->split_left();
-                temp_right_pointer = thread_node->split_right();
-                tstack.push_back(temp_right_pointer);
-                if(stack.size()==0)
+                temp_pointer = tstack.back();
+                tstack.pop_back();
+                tstack.push_back(temp_pointer->split_right());
+                tstack.push_back(temp_pointer->split_left());
+                std::cout << "Instance 2.1: " << tn << " , " << temp_pointer << std::endl;
+                delete temp_pointer;
+                std::cout << "Instance 2.2: " << tn << " , " << temp_pointer << std::endl;
+                temp_pointer = NULL;
+
+                request_node=gmail.check_first_email_sender(tn);
+                if(request_node!=gmail.end())
                 {
-                    if(tstack.size()>100)
+                    #pragma omp critical
                     {
-                        #pragma omp critical
-                        {
-                            allocate = floor(tstack.size()*percent);
-                            stack.insert(stack.end(),tstack.begin(),tstack.begin()+allocate);
-                            tstack.erase(tstack.begin(),tstack.begin()+allocate);
-                        }
+                        std::cout << "Transferring: " << tn << std::endl;
+                        std::cout << "Size: " << gmail.emails[tn][request_node].second->size() << std::endl;
+                        gmail.transfer(tn,request_node,&tstack);
                     }
                 }
-                delete thread_node;
-                thread_node = temp_left_pointer;
             }
         }
     }
