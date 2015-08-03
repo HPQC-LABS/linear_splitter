@@ -21,16 +21,19 @@ typedef std::pair<std::vector<unsigned>, int> edge_type;
 
 class Hamiltonian{
 public:
+    Hamiltonian (std::string);
     Hamiltonian (int, int, int);
     Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>);
     Hamiltonian* split_left();
     Hamiltonian* split_right();
     bool is_simple();
+    unsigned cost();
+    
     std::vector<edge_type> edges_;
     std::map<unsigned,unsigned> variables_;
-    unsigned cost();
 private:
-    void read_hamiltonian (int, int, int);
+    void read_hamiltonian (std::string);
+    void initialize();
     void sort_terms();
 
     unsigned split_by_total_terms();

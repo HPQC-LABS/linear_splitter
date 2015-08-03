@@ -2,15 +2,19 @@
 
 using std::to_string;
 
+Hamiltonian::Hamiltonian(std::string input_file)
+{
+    read_hamiltonian(input_file);
+    initialize();
+}
+
 Hamiltonian::Hamiltonian(int m, int n, int N):n_(n),m_(m),N_(N)
 {
-    read_hamiltonian(m,n,N);
-    sort_terms();
-    //Initialize variable costs
-    for(unsigned i = 0; i < counter_; i++)
-        variables_[i] = 0;
-    //Calculate highest cost variable
-    split_variable = split_by_total_cost();
+    //Determine file name
+    std::string const input_file = "hamiltonians/H_" + to_string(m) + "_" + to_string(n) + "_" + to_string(N) + ".txt";
+
+    read_hamiltonian(input_file);
+    initialize();
 }
 
 Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned> variables)
@@ -20,6 +24,16 @@ Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned
     variables_=variables;
     for(map_iterator it = variables_.begin(); it!=variables_.end(); ++it)
         it -> second = 0;
+    split_variable = split_by_total_cost();
+}
+
+void Hamiltonian::initialize()
+{
+    sort_terms();
+    //Initialize variable costs
+    for(unsigned i = 0; i < counter_; i++)
+        variables_[i] = 0;
+    //Calculate highest cost variable
     split_variable = split_by_total_cost();
 }
 
@@ -85,12 +99,9 @@ bool Hamiltonian::is_simple()
     return false;
 }
 
-void Hamiltonian::read_hamiltonian(int m, int n, int N)
+void Hamiltonian::read_hamiltonian(std::string input_file)
 {
-    //Determine file name
-    std::string const file_name = "H_" + to_string(m) + "_" + to_string(n) + "_" + to_string(N) + ".txt";
-
-    std::ifstream in(file_name);
+    std::ifstream in(input_file);
     assert(in);
 
     counter_ = 0;
