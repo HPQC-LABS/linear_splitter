@@ -8,6 +8,12 @@ Hamiltonian::Hamiltonian(std::string input_file)
     initialize();
 }
 
+Hamiltonian::Hamiltonian(std::string input_file, unsigned hamiltonian_number)
+{
+    read_hamiltonian(input_file, hamiltonian_number);
+    initialize();
+}
+
 Hamiltonian::Hamiltonian(int m, int n, int N):n_(n),m_(m),N_(N)
 {
     //Determine file name
@@ -141,6 +147,57 @@ void Hamiltonian::read_hamiltonian(std::string input_file)
     in.close();
 }
 
+void Hamiltonian::read_hamiltonian(std::string input_file, unsigned number)
+{
+    std::ifstream in(input_file);
+    assert(in);
+
+    unsigned hamiltonian_number = 0;
+    counter_ = 0;
+    std::map<std::string,unsigned> index;
+    while(in){
+
+        std::string input_str; 
+        if(!std::getline(in,input_str)) break;
+
+        if(input_str.find('#') == std::string::npos)
+        {
+            if(hamiltonian_number == number)
+            {
+
+                    //Read line into vector input
+                    std::istringstream tmp0(input_str);
+                    std::vector<std::string> input;
+                    while (tmp0){
+                        std::string s;
+                        if (!std::getline(tmp0, s, ' ')) break;
+                        input.push_back(s);
+                    }
+
+                    const int val(std::stoi(input[input.size()-1]));
+
+                    edge_type edge;
+
+                    edge.second = val;
+
+                    for(unsigned i = 0; i < input.size()-1; ++i){
+                        const std::string site(input[i]);
+                        //If site does not appear in the map index
+                        if(index.find(site) == index.end())
+                            index[site] = counter_++;
+                        edge.first.push_back(index[site]);
+                    }
+                    edges_.push_back(edge);
+            }
+        }
+        else
+        {
+            ++hamiltonian_number;
+        }
+    }
+    in.close();
+}
+
 unsigned Hamiltonian::split_by_total_terms(){
     for(unsigned j = 0; j < edges_.size(); ++j)
         for(const auto a : edges_[j].first)
@@ -173,7 +230,7 @@ bool all_nodes_are_simple(std::vector<bool> thread_states)
     return true;
 }
 
-unsigned split(Hamiltonian* h)
+unsigned split(std::vector<Hamiltonian*> stack)
 {
     std::vector<Hamiltonian*> tstack;
     std::vector<Hamiltonian*>* request_stack;
@@ -192,7 +249,7 @@ unsigned split(Hamiltonian* h)
             nthreads = omp_get_num_threads();
             std::cout << "Initializing " << nthreads << " threads..." << std::endl;
             gmail.resize(nthreads);
-            tstack.push_back(h);
+            tstack = stack;
             gmail.is_working[tn] = true;
             std::cout << "Executing..." << std::endl;
         }
@@ -237,4 +294,23 @@ unsigned split(Hamiltonian* h)
         number_of_hamiltonians+=thread_counter;
     }
     return number_of_hamiltonians;
+}
+
+
+std::vector<Hamiltonian*> initialize_multiple(std::string input_file)
+{
+    unsigned input_position,length,number_of_hamiltonians;
+    std::vector<Hamiltonian*> initial_stack;
+
+    std::reverse(input_file.begin(),input_file.end());
+    input_position = input_file.length()-input_file.find('_');
+    std::reverse(input_file.begin(),input_file.end());
+
+    length = input_file.find('.') - input_position;
+    number_of_hamiltonians = std::stoi(input_file.substr(input_position,length));
+    for(unsigned i = 0; i < number_of_hamiltonians; ++i)
+    {
+        initial_stack.push_back(new Hamiltonian(input_file, i));
+    }
+    return initial_stack;
 }

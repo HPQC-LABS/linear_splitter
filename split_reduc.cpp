@@ -14,12 +14,12 @@ int main(int argc, char* argv[])
 
         if ((streamm >> m)&&(streamn >> n)&&(streamN >> N)&&(N>=m)&&(N>=n))
         {
-            Hamiltonian* root = new Hamiltonian(m,n,N);
+            std::vector<Hamiltonian*> stack(1, new Hamiltonian(m,n,N));
 
             std::clock_t start;
             start = std::clock();
 
-            unsigned nH = split(root);
+            unsigned nH = split(stack);
             std::cout << "#####################" << std::endl;
             std::cout << "R(" << m << "," << n << "," << N << ") - number of Hamiltonians: " << nH << std::endl;
             std::cout << "CPU Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
@@ -29,12 +29,12 @@ int main(int argc, char* argv[])
     else if(argc == 2)
     {
         const std::string input_file(argv[1]);
-        Hamiltonian* root = new Hamiltonian(input_file);
+        std::vector<Hamiltonian*> stack = initialize_multiple(input_file);
 
         std::clock_t start;
         start = std::clock();
 
-        unsigned n = split(root);
+        unsigned n = split(stack);
         std::cout << "#####################" << std::endl;
         std::cout << "Input file: " << input_file << std::endl;
         std::cout << "Number of Hamiltonians: " << n << std::endl;

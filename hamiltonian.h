@@ -22,6 +22,7 @@ typedef std::pair<std::vector<unsigned>, int> edge_type;
 class Hamiltonian{
 public:
     Hamiltonian (std::string);
+    Hamiltonian (std::string, unsigned);
     Hamiltonian (int, int, int);
     Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>);
     Hamiltonian* split_left();
@@ -32,7 +33,8 @@ public:
     std::vector<edge_type> edges_;
     std::map<unsigned,unsigned> variables_;
 private:
-    void read_hamiltonian (std::string);
+    void read_hamiltonian(std::string);
+    void read_hamiltonian(std::string,unsigned);
     void initialize();
     void sort_terms();
 
@@ -45,7 +47,9 @@ private:
     std::size_t counter_;
 };
 
+std::vector<Hamiltonian*> initialize_multiple(std::string);
+
 bool all_nodes_are_simple(std::vector<bool>);
-unsigned split(Hamiltonian*);
+unsigned split(std::vector<Hamiltonian*>);
 
 #endif
