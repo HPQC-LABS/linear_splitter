@@ -28,6 +28,7 @@ To generate Ramsey number hamiltonians run
 Where m is the number of cliques, n is the number of independent sets and N is the number of vertices.
 
 If you want to create Ramsey number hamiltonians with search space reduction run
+
     MathematicaScript -script sr_hamiltonian.h m n N
 
 Note that `MathematicaScript` needs to be in your path. 
