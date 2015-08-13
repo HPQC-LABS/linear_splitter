@@ -22,7 +22,7 @@ public:
     TelephoneCenter(unsigned);
 
     std::vector<bool> is_working;
-    std::vector<std::vector<request>> emails;
+    std::vector<std::vector<request> > emails;
 
     bool all_states_idle();
 

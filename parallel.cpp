@@ -77,7 +77,7 @@ void TelephoneCenter::send_email(int thread_number, std::vector<Hamiltonian*>* v
 void TelephoneCenter::transfer(int thread_number, int destination, std::vector<Hamiltonian*>* local_stack)
 {
     std::vector<Hamiltonian*>* request_stack = emails[thread_number][destination].second;
-    unsigned transfer_amount = floor(local_stack->size()/(1+number_of_emails_in_inbox(thread_number)));
+    unsigned transfer_amount = std::floor(local_stack->size()/(1+number_of_emails_in_inbox(thread_number)));
     if(transfer_amount!=0)
     {
         if(request_stack->size()==0)

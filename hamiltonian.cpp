@@ -200,16 +200,16 @@ void Hamiltonian::read_hamiltonian(std::string input_file, unsigned number)
 
 unsigned Hamiltonian::split_by_total_terms(){
     for(unsigned j = 0; j < edges_.size(); ++j)
-        for(const auto a : edges_[j].first)
-            variables_[a]++;
+        for(std::vector<unsigned>::iterator a = edges_[j].first.begin(); a != edges_[j].first.end(); ++a)
+            variables_[*a]++;
     return max_map_value(variables_.begin(), variables_.end()) -> first;
 }
 
 unsigned Hamiltonian::split_by_total_cost()
 {
     for(unsigned j = 0; j < edges_.size(); ++j)
-        for(const auto a : edges_[j].first)
-            variables_[a] += edges_[j].first.size() - 2 + 1;
+        for(std::vector<unsigned>::iterator a = edges_[j].first.begin(); a != edges_[j].first.end(); ++a)
+            variables_[*a] += edges_[j].first.size() - 2 + 1;
     return max_map_value(variables_.begin(), variables_.end()) -> first; 
 }
 
@@ -301,16 +301,24 @@ std::vector<Hamiltonian*> initialize_multiple(std::string input_file)
 {
     unsigned input_position,length,number_of_hamiltonians;
     std::vector<Hamiltonian*> initial_stack;
-
-    std::reverse(input_file.begin(),input_file.end());
-    input_position = input_file.length()-input_file.find('_');
-    std::reverse(input_file.begin(),input_file.end());
-
-    length = input_file.find('.') - input_position;
-    number_of_hamiltonians = std::stoi(input_file.substr(input_position,length));
-    for(unsigned i = 0; i < number_of_hamiltonians; ++i)
+    size_t n = std::count(input_file.begin(), input_file.end(), '_');
+    if(n==5)
     {
-        initial_stack.push_back(new Hamiltonian(input_file, i));
+        std::reverse(input_file.begin(),input_file.end());
+        input_position = input_file.length()-input_file.find('_');
+        std::reverse(input_file.begin(),input_file.end());
+
+        length = input_file.find('.') - input_position;
+        number_of_hamiltonians = std::stoi(input_file.substr(input_position,length));
+        for(unsigned i = 0; i < number_of_hamiltonians; ++i)
+        {
+            initial_stack.push_back(new Hamiltonian(input_file, i));
+        }
+    }
+    else
+    {
+        initial_stack.push_back(new Hamiltonian(input_file));
+
     }
     return initial_stack;
 }
