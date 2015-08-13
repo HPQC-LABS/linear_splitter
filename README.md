@@ -19,7 +19,7 @@ Usage
 -----
 Splitting can be used on any hamiltonian in the correct format. Simply run 
 
-    ./split_reduc inpul_file_name
+    ./split_reduc input_file_name
 
 To also generate Ramsey number hamiltonians run
 
