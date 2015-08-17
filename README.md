@@ -33,6 +33,12 @@ If you want to create Ramsey number hamiltonians with search space reduction run
 
 Note that `MathematicaScript` needs to be in your path. 
 
+You can also create a batch of hamiltonains by running
+
+    ./create_hamiltonians.sh m n N
+
+It will generate the files from 6 up to N.
+
 Known issues
 ------------
 Sometimes `MathematicaScript` is installed as `MathematicaScript10`. To fix, replace all instances of `MathematicaScript` with `MathematicaScript10`.
