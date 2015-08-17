@@ -8,7 +8,7 @@ First download the source files using
 
 Then compile using
 
-    g++ split_reduc.cpp algorithms.cpp hamiltonian.cpp parallel.cpp -o split_reduc -std=c++11 -fopenmp -O3
+    ./compile.sh
 
 Notes on compilation flags:
 - `std=c++11` allow use of latest C++ standards
@@ -37,10 +37,14 @@ You can also create a batch of hamiltonains by running
 
     ./create_hamiltonians.sh m n N
 
-It will generate the files from 6 up to N.
+It will generate the files from 6 up to N. Use
+
+    ./run_hamiltonians.sh m n
+
+to run all hamiltonians associated with R(m,n).
 
 Known issues
 ------------
-Sometimes `MathematicaScript` is installed as `MathematicaScript10`. To fix, replace all instances of `MathematicaScript` with `MathematicaScript10`.
+Sometimes `MathematicaScript` is installed as `MathematicaScript10`. To fix, replace all instances of `MathematicaScript` with `MathematicaScript10` (this also includes the create_hamiltonians.sh file).
 
 You might have to create a directory in this repo called `hamiltonians`.
