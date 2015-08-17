@@ -28,11 +28,11 @@ split[m_,n_,N_]:=Module[{stack={{}},tmp,left,right,splits={}},
 		If[
 			Abs[Total@Abs@tmp-N]<=2,
 			AppendTo[splits,tmp],
-			{left,right}={1,-1}*findNext[m,n,N-Total@Abs@tmp];
+			{left,right}=If[n==#[[1]],-Reverse@#,#]&[{1,-1}*findNext[m,n,N-Total@Abs@tmp]];
 			stack=stack~Join~{Append[tmp,left],Append[tmp,right]}
 		]
 	];
-	Select[splits,!MemberQ[#,m]&]
+	Select[splits,!(MemberQ[#,m]||MemberQ[#,-n])&]
 ]
 
 indepent[m_,n_,N_]:=If[N>=n,Total[Expand[Times@@(1-a@@@Subsets[Array[c,n],{2}])]/.(Thread[Array[c,n]->#]&/@Subsets[Range[N],{n}])],0];
@@ -41,16 +41,20 @@ h[m_,n_,N_]:=indepent[m,n,N]+cluster[m,n,N];
 
 originalHamiltonian=h@@var;
 hamiltonians=originalHamiltonian/.makeRules/@split@@var;
-numberOfSplits=Length@hamiltonians;
+If[
+    Or@@(#===0&/@hamiltonians),
+    Print["Min is 0"],
+    numberOfSplits=Length@hamiltonians;
 
-variables=Variables@originalHamiltonian;
-terms=List@@#&/@hamiltonians;
-coefficients=terms/.Thread[variables->1];
-variablesInTerm=Variables/@#&/@terms/.Thread[variables->Range@Length@variables];
-coefficientMatrix=Join[variablesInTerm[[#]],{coefficients[[#]]}\[Transpose],2]&/@Range@numberOfSplits;
+    variables=Variables@originalHamiltonian;
+    terms=List@@#&/@hamiltonians;
+    coefficients=terms/.Thread[variables->1];
+    variablesInTerm=Variables/@#&/@terms/.Thread[variables->Range@Length@variables];
+    coefficientMatrix=Join[variablesInTerm[[#]],{coefficients[[#]]}\[Transpose],2]&/@Range@numberOfSplits;
 
-fname = "hamiltonians/SR_H_"<>ToString@var[[1]]<>"_"<>ToString@var[[2]]<>"_"<>ToString@var[[3]]<>"_"<>ToString@numberOfSplits<>".txt";
-s = OpenWrite[fname];
-Do[WriteLine[s,StringJoin[Riffle[ToString/@#," "]]]&/@coefficientMatrix[[a]];WriteLine[s,"#"],{a,numberOfSplits}];
-Close[s];
-Print[fname];
+    fname = "hamiltonians/SR_H_"<>ToString@var[[1]]<>"_"<>ToString@var[[2]]<>"_"<>ToString@var[[3]]<>"_"<>ToString@numberOfSplits<>".txt";
+    s = OpenWrite[fname];
+    Do[WriteLine[s,StringJoin[Riffle[ToString/@#," "]]]&/@coefficientMatrix[[a]];WriteLine[s,"#"],{a,numberOfSplits}];
+    Close[s];
+    Print[fname];
+]
