@@ -43,6 +43,10 @@ It will generate the files from 6 up to N. Use
 
 to run all hamiltonians associated with R(m,n).
 
+Runtime flags
+-------------
+- To change the number of threads used for splitting supply the `-t` flag **after** the input file and then number of threads e.g. `./split_reduc input_file -t 8`.
+
 Known issues
 ------------
 Sometimes `MathematicaScript` is installed as `MathematicaScript10`. To fix, replace all instances of `MathematicaScript` with `MathematicaScript10` (this also includes the create_hamiltonians.sh file).

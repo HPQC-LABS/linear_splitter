@@ -7,26 +7,15 @@
 
 int main(int argc, char* argv[])
 {
-    if(argc >= 4)
-    {
-        std::istringstream streamm( argv[1] ), streamn( argv[2] ), streamN( argv[3] );
-        int m, n, N;
+    std::vector<std::string> args(argv + 1, argv + argc);
+    unsigned number_of_threads = 8;
+    std::vector<std::string>::iterator thread_flag = std::find(args.begin(),args.end(),"-t");
+    if(thread_flag!=args.end())
+        if(thread_flag+1!=args.end())
+            if(0<std::stoi(*(++thread_flag)))
+                number_of_threads = std::stoi(*thread_flag);
 
-        if ((streamm >> m)&&(streamn >> n)&&(streamN >> N)&&(N>=m)&&(N>=n))
-        {
-            std::vector<Hamiltonian*> stack(1, new Hamiltonian(m,n,N));
-
-            std::clock_t start;
-            start = std::clock();
-
-            unsigned nH = split(stack);
-            std::cout << "#####################" << std::endl;
-            std::cout << "R(" << m << "," << n << "," << N << ") - number of Hamiltonians: " << nH << std::endl;
-            std::cout << "CPU Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-            std::cout << "#####################" << std::endl;
-        }
-    }
-    else if(argc == 2)
+    if(argc >= 2)
     {
         const std::string input_file(argv[1]);
         std::vector<Hamiltonian*> stack = initialize_multiple(input_file);
@@ -34,7 +23,7 @@ int main(int argc, char* argv[])
         std::clock_t start;
         start = std::clock();
 
-        unsigned n = split(stack);
+        unsigned n = split(stack,number_of_threads);
         std::cout << "#####################" << std::endl;
         std::cout << "Input file: " << input_file << std::endl;
         std::cout << "Number of Hamiltonians: " << n << std::endl;

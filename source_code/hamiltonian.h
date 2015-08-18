@@ -50,6 +50,6 @@ private:
 std::vector<Hamiltonian*> initialize_multiple(std::string);
 
 bool all_nodes_are_simple(std::vector<bool>);
-unsigned split(std::vector<Hamiltonian*>);
+unsigned split(std::vector<Hamiltonian*>,unsigned);
 
 #endif

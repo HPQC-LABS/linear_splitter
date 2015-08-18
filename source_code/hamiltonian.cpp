@@ -230,7 +230,7 @@ bool all_nodes_are_simple(std::vector<bool> thread_states)
     return true;
 }
 
-unsigned split(std::vector<Hamiltonian*> stack)
+unsigned split(std::vector<Hamiltonian*> stack,unsigned number_of_threads)
 {
     std::vector<Hamiltonian*> tstack;
     std::vector<Hamiltonian*>* request_stack;
@@ -240,7 +240,7 @@ unsigned split(std::vector<Hamiltonian*> stack)
     TelephoneCenter gmail;
 
     omp_set_dynamic(0);
-    omp_set_num_threads(8);
+    omp_set_num_threads(number_of_threads);
     #pragma omp parallel shared(number_of_hamiltonians,gmail) firstprivate(tn,tstack,temp_pointer,request_node,request_stack,thread_counter)
     {
         tn = omp_get_thread_num();
