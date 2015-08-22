@@ -2,15 +2,17 @@
 
 using std::to_string;
 
-Hamiltonian::Hamiltonian(std::string input_file)
+Hamiltonian::Hamiltonian(std::string input_file, unsigned number_of_qubits)
 {
     read_hamiltonian(input_file);
+    qubits=number_of_qubits;
     initialize();
 }
 
-Hamiltonian::Hamiltonian(std::string input_file, unsigned hamiltonian_number)
+Hamiltonian::Hamiltonian(std::string input_file, unsigned number_of_qubits, unsigned hamiltonian_number)
 {
     read_hamiltonian(input_file, hamiltonian_number);
+    qubits=number_of_qubits;
     initialize();
 }
 
@@ -20,14 +22,16 @@ Hamiltonian::Hamiltonian(int m, int n, int N):n_(n),m_(m),N_(N)
     std::string const input_file = "hamiltonians/H_" + to_string(m) + "_" + to_string(n) + "_" + to_string(N) + ".txt";
 
     read_hamiltonian(input_file);
+    qubits=2048;
     initialize();
 }
 
-Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned> variables)
+Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned> variables, unsigned number_of_qubits)
 {
     edges_ = edges;
     sort_terms();
     variables_=variables;
+    qubits = number_of_qubits;
     for(map_iterator it = variables_.begin(); it!=variables_.end(); ++it)
         it -> second = 0;
     split_variable = split_by_total_cost();
@@ -62,7 +66,7 @@ Hamiltonian* Hamiltonian::split_left()
         }
     temp_variables.erase(split_variable);
 
-    return new Hamiltonian(temp_edges,temp_variables);
+    return new Hamiltonian(temp_edges,temp_variables, qubits);
 }
 
 Hamiltonian* Hamiltonian::split_right()
@@ -95,7 +99,7 @@ Hamiltonian* Hamiltonian::split_right()
         }
     }
     temp_variables.erase(split_variable);
-    return new Hamiltonian(temp_edges,temp_variables);
+    return new Hamiltonian(temp_edges,temp_variables,qubits);
 }
 
 bool Hamiltonian::is_simple()
@@ -208,29 +212,31 @@ unsigned Hamiltonian::split_by_total_terms(){
 unsigned Hamiltonian::split_by_total_cost()
 {
     for(unsigned j = 0; j < edges_.size(); ++j)
+    {
         for(std::vector<unsigned>::iterator a = edges_[j].first.begin(); a != edges_[j].first.end(); ++a)
-            variables_[*a] += edges_[j].first.size() - 2 + 1;
+        {
+            if(variables_[*a]==0)
+                ++variables_[*a];
+            if(edges_[j].first.size()>2)
+                variables_[*a] += edges_[j].first.size() - 2 + 1;
+        }
+    }
     return max_map_value(variables_.begin(), variables_.end()) -> first; 
 }
 
 unsigned Hamiltonian::cost()
 {
-    unsigned h_cost = variables_.size();
+    unsigned h_cost = 0;
+    for(unsigned j = 0; j < variables_.size(); ++j)
+        if(variables_[j]>0)
+            ++h_cost;
     for(unsigned j = 0; j < edges_.size(); ++j)
         if(edges_[j].first.size()>2)
             h_cost += edges_[j].first.size()-2;
     return h_cost; 
 }
 
-bool all_nodes_are_simple(std::vector<bool> thread_states)
-{
-    for(unsigned i = 0; i < thread_states.size(); ++i)
-        if(thread_states[i]==false)
-            return false;
-    return true;
-}
-
-unsigned split(std::vector<Hamiltonian*> stack,unsigned number_of_threads)
+unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads)
 {
     std::vector<Hamiltonian*> tstack;
     std::vector<Hamiltonian*>* request_stack;
@@ -297,7 +303,7 @@ unsigned split(std::vector<Hamiltonian*> stack,unsigned number_of_threads)
 }
 
 
-std::vector<Hamiltonian*> initialize_multiple(std::string input_file)
+std::vector<Hamiltonian*> initialize_multiple(std::string input_file, unsigned number_of_qubits)
 {
     unsigned input_position,length,number_of_hamiltonians;
     std::vector<Hamiltonian*> initial_stack;
@@ -312,13 +318,12 @@ std::vector<Hamiltonian*> initialize_multiple(std::string input_file)
         number_of_hamiltonians = std::stoi(input_file.substr(input_position,length));
         for(unsigned i = 0; i < number_of_hamiltonians; ++i)
         {
-            initial_stack.push_back(new Hamiltonian(input_file, i));
+            initial_stack.push_back(new Hamiltonian(input_file, number_of_qubits, i));
         }
     }
     else
     {
-        initial_stack.push_back(new Hamiltonian(input_file));
-
+        initial_stack.push_back(new Hamiltonian(input_file, number_of_qubits));
     }
     return initial_stack;
 }

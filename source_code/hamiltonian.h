@@ -23,12 +23,14 @@ class Hamiltonian{
 public:
     Hamiltonian (std::string);
     Hamiltonian (std::string, unsigned);
+    Hamiltonian (std::string, unsigned, unsigned);
     Hamiltonian (int, int, int);
-    Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>);
+    Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>, unsigned);
     Hamiltonian* split_left();
     Hamiltonian* split_right();
     bool is_simple();
     unsigned cost();
+    unsigned qubits;
     
     std::vector<edge_type> edges_;
     std::map<unsigned,unsigned> variables_;
@@ -42,12 +44,11 @@ private:
     unsigned split_by_total_cost();
 
     int n_,m_,N_;
-    const unsigned qubits = 2048;
     unsigned split_variable;
     std::size_t counter_;
 };
 
-std::vector<Hamiltonian*> initialize_multiple(std::string);
+std::vector<Hamiltonian*> initialize_multiple(std::string, unsigned);
 
 bool all_nodes_are_simple(std::vector<bool>);
 unsigned split(std::vector<Hamiltonian*>,unsigned);

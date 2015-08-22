@@ -8,7 +8,15 @@
 int main(int argc, char* argv[])
 {
     std::vector<std::string> args(argv + 1, argv + argc);
-    unsigned number_of_threads = 8;
+
+    unsigned number_of_threads = 8, number_of_qubits = 2048;
+
+    std::vector<std::string>::iterator qubit_flag = std::find(args.begin(),args.end(),"-q");
+    if(qubit_flag!=args.end())
+        if(qubit_flag+1!=args.end())
+            if(0<std::stoi(*(++qubit_flag)))
+                number_of_qubits = std::stoi(*qubit_flag);
+
     std::vector<std::string>::iterator thread_flag = std::find(args.begin(),args.end(),"-t");
     if(thread_flag!=args.end())
         if(thread_flag+1!=args.end())
@@ -18,7 +26,7 @@ int main(int argc, char* argv[])
     if(argc >= 2)
     {
         const std::string input_file(argv[1]);
-        std::vector<Hamiltonian*> stack = initialize_multiple(input_file);
+        std::vector<Hamiltonian*> stack = initialize_multiple(input_file,number_of_qubits);
 
         std::clock_t start;
         start = std::clock();
