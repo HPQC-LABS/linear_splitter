@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 //Compile with
-//g++ split_reduc.cpp algorithms.cpp hamiltonian.cpp parallel.cpp -o split_reduc -std=c++11 -fopenmp -O3
+//g++ split_reduc.cpp algorithms.cpp hamiltonian.cpp parallel.cpp read.cpp split.cpp -o split_reduc -std=c++11 -fopenmp -O3
 
 int main(int argc, char* argv[])
 {
@@ -25,13 +25,21 @@ int main(int argc, char* argv[])
 
     if(argc >= 2)
     {
+        //Read file
         const std::string input_file(argv[1]);
-        std::vector<Hamiltonian*> stack = initialize_multiple(input_file,number_of_qubits);
+        std::vector<Hamiltonian*> stack = read_file(input_file,number_of_qubits);
+        /*
+        for(unsigned j = 0; j < stack.size(); ++j)
+            for(unsigned k = 0; k < stack[j]->edges_.size(); ++k)
+                std::cout << stack[j]->edges_[k].first << std::endl;
 
+        std::cout << stack.size() << std::endl;
+        */
         std::clock_t start;
         start = std::clock();
 
         unsigned n = split(stack,number_of_threads);
+
         std::cout << "#####################" << std::endl;
         std::cout << "Input file: " << input_file << std::endl;
         std::cout << "Number of Hamiltonians: " << n << std::endl;
@@ -40,7 +48,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout << "Please input 3 arguments" << std::endl;
+        std::cout << "Please input file name" << std::endl;
     }
     return 0;
 }

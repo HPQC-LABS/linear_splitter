@@ -1,58 +1,43 @@
 #include "hamiltonian.h"
-
 using std::to_string;
 
-Hamiltonian::Hamiltonian(std::string input_file, unsigned number_of_qubits)
+//Initializers
+Hamiltonian::Hamiltonian(unsigned number_of_qubits) 
 {
-    read_hamiltonian(input_file);
     qubits=number_of_qubits;
-    initialize();
-}
-
-Hamiltonian::Hamiltonian(std::string input_file, unsigned number_of_qubits, unsigned hamiltonian_number)
-{
-    read_hamiltonian(input_file, hamiltonian_number);
-    qubits=number_of_qubits;
-    initialize();
-}
-
-Hamiltonian::Hamiltonian(int m, int n, int N):n_(n),m_(m),N_(N)
-{
-    //Determine file name
-    std::string const input_file = "hamiltonians/H_" + to_string(m) + "_" + to_string(n) + "_" + to_string(N) + ".txt";
-
-    read_hamiltonian(input_file);
-    qubits=2048;
-    initialize();
+    counter_=0;
 }
 
 Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned> variables, unsigned number_of_qubits)
 {
-    edges_ = edges;
-    sort_terms();
-    variables_=variables;
     qubits = number_of_qubits;
+    edges_ = edges;
+    for(unsigned i = 0; i < edges_.size(); ++i)
+        std::sort(edges_[i].first.begin(),edges_[i].first.end());
+
+    variables_ = variables;
+
     for(map_iterator it = variables_.begin(); it!=variables_.end(); ++it)
         it -> second = 0;
+
     split_variable = split_by_total_cost();
 }
 
-void Hamiltonian::initialize()
+void Hamiltonian::clean_hamiltonian()
 {
-    sort_terms();
+    //Sort edge list
+    for(unsigned i = 0; i < edges_.size(); ++i)
+        std::sort(edges_[i].first.begin(),edges_[i].first.end());
+    
     //Initialize variable costs
     for(unsigned i = 0; i < counter_; i++)
         variables_[i] = 0;
+    
     //Calculate highest cost variable
     split_variable = split_by_total_cost();
 }
 
-void Hamiltonian::sort_terms()
-{
-    for(unsigned i = 0; i < edges_.size(); ++i)
-        std::sort(edges_[i].first.begin(),edges_[i].first.end());
-}
-
+//Split functions
 Hamiltonian* Hamiltonian::split_left()
 {
     std::vector<edge_type> temp_edges = edges_;
@@ -102,106 +87,27 @@ Hamiltonian* Hamiltonian::split_right()
     return new Hamiltonian(temp_edges,temp_variables,qubits);
 }
 
+//C(H) functions
 bool Hamiltonian::is_simple()
 {
-    if(cost() < qubits)
+    if(cost() <= qubits)
         return true;
     return false;
 }
 
-void Hamiltonian::read_hamiltonian(std::string input_file)
+unsigned Hamiltonian::cost()
 {
-    std::ifstream in(input_file);
-    assert(in);
-
-    counter_ = 0;
-    std::map<std::string,unsigned> index;
-    while(in){
-
-        std::string input_str; 
-        if(!std::getline(in,input_str)) break;
-
-        if(input_str.find('#') == std::string::npos){
-
-            //Read line into vector input
-            std::istringstream tmp0(input_str);
-            std::vector<std::string> input;
-            while (tmp0){
-                std::string s;
-                if (!std::getline(tmp0, s, ' ')) break;
-                input.push_back(s);
-            }
-
-            const int val(std::stoi(input[input.size()-1]));
-
-            edge_type edge;
-
-            edge.second = val;
-
-            for(unsigned i = 0; i < input.size()-1; ++i){
-                const std::string site(input[i]);
-                //If site does not appear in the map index
-                if(index.find(site) == index.end())
-                    index[site] = counter_++;
-                edge.first.push_back(index[site]);
-            }
-            edges_.push_back(edge);
-        }
-    }
-    in.close();
+    unsigned h_cost = 0;
+    for(unsigned j = 0; j < variables_.size(); ++j)
+        if(variables_[j]>0)
+            ++h_cost;
+    for(unsigned j = 0; j < edges_.size(); ++j)
+        if(edges_[j].first.size()>2)
+            h_cost += edges_[j].first.size()-2;
+    return h_cost; 
 }
 
-void Hamiltonian::read_hamiltonian(std::string input_file, unsigned number)
-{
-    std::ifstream in(input_file);
-    assert(in);
-
-    unsigned hamiltonian_number = 0;
-    counter_ = 0;
-    std::map<std::string,unsigned> index;
-    while(in){
-
-        std::string input_str; 
-        if(!std::getline(in,input_str)) break;
-
-        if(input_str.find('#') == std::string::npos)
-        {
-            if(hamiltonian_number == number)
-            {
-
-                    //Read line into vector input
-                    std::istringstream tmp0(input_str);
-                    std::vector<std::string> input;
-                    while (tmp0){
-                        std::string s;
-                        if (!std::getline(tmp0, s, ' ')) break;
-                        input.push_back(s);
-                    }
-
-                    const int val(std::stoi(input[input.size()-1]));
-
-                    edge_type edge;
-
-                    edge.second = val;
-
-                    for(unsigned i = 0; i < input.size()-1; ++i){
-                        const std::string site(input[i]);
-                        //If site does not appear in the map index
-                        if(index.find(site) == index.end())
-                            index[site] = counter_++;
-                        edge.first.push_back(index[site]);
-                    }
-                    edges_.push_back(edge);
-            }
-        }
-        else
-        {
-            ++hamiltonian_number;
-        }
-    }
-    in.close();
-}
-
+//C_H functions
 unsigned Hamiltonian::split_by_total_terms(){
     for(unsigned j = 0; j < edges_.size(); ++j)
         for(std::vector<unsigned>::iterator a = edges_[j].first.begin(); a != edges_[j].first.end(); ++a)
@@ -217,113 +123,9 @@ unsigned Hamiltonian::split_by_total_cost()
         {
             if(variables_[*a]==0)
                 ++variables_[*a];
-            if(edges_[j].first.size()>2)
+            if(edges_[j].first.size()>=2)
                 variables_[*a] += edges_[j].first.size() - 2 + 1;
         }
     }
     return max_map_value(variables_.begin(), variables_.end()) -> first; 
-}
-
-unsigned Hamiltonian::cost()
-{
-    unsigned h_cost = 0;
-    for(unsigned j = 0; j < variables_.size(); ++j)
-        if(variables_[j]>0)
-            ++h_cost;
-    for(unsigned j = 0; j < edges_.size(); ++j)
-        if(edges_[j].first.size()>2)
-            h_cost += edges_[j].first.size()-2;
-    return h_cost; 
-}
-
-unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads)
-{
-    std::vector<Hamiltonian*> tstack;
-    std::vector<Hamiltonian*>* request_stack;
-    Hamiltonian* temp_pointer = NULL;
-    unsigned number_of_hamiltonians = 0,thread_counter = 0;
-    unsigned tn,nthreads,request_node;
-    TelephoneCenter gmail;
-
-    omp_set_dynamic(0);
-    omp_set_num_threads(number_of_threads);
-    #pragma omp parallel shared(number_of_hamiltonians,gmail) firstprivate(tn,tstack,temp_pointer,request_node,request_stack,thread_counter)
-    {
-        tn = omp_get_thread_num();
-        #pragma omp single 
-        {
-            nthreads = omp_get_num_threads();
-            std::cout << "Initializing " << nthreads << " threads..." << std::endl;
-            gmail.resize(nthreads);
-            tstack = stack;
-            gmail.is_working[tn] = true;
-            std::cout << "Executing..." << std::endl;
-        }
-
-        while(!gmail.all_states_idle())
-        {
-            if(tstack.size()==0)
-            {
-                usleep(1000000);
-                gmail.is_working[tn] = false;
-                gmail.send_email(tn,&tstack);
-            }
-            else if(tstack.back()->is_simple())
-            {
-                //replace with local counter
-                gmail.is_working[tn] = true;
-                ++thread_counter;
-                delete tstack.back();
-                tstack.pop_back();
-            }
-            else
-            {
-                gmail.is_working[tn] = true;
-                temp_pointer = tstack.back();
-                tstack.pop_back();
-                tstack.push_back(temp_pointer->split_right());
-                tstack.push_back(temp_pointer->split_left());
-                delete temp_pointer;
-                temp_pointer = NULL;
-
-                request_node=gmail.check_first_email_sender(tn);
-                if(request_node!=gmail.end())
-                {
-                    if(tstack.size()>1)
-                    {
-                        gmail.transfer(tn,request_node,&tstack);
-                    }
-                }
-            }
-        }
-        #pragma omp critical
-        number_of_hamiltonians+=thread_counter;
-    }
-    return number_of_hamiltonians;
-}
-
-
-std::vector<Hamiltonian*> initialize_multiple(std::string input_file, unsigned number_of_qubits)
-{
-    unsigned input_position,length,number_of_hamiltonians;
-    std::vector<Hamiltonian*> initial_stack;
-    size_t n = std::count(input_file.begin(), input_file.end(), '_');
-    if(n==5)
-    {
-        std::reverse(input_file.begin(),input_file.end());
-        input_position = input_file.length()-input_file.find('_');
-        std::reverse(input_file.begin(),input_file.end());
-
-        length = input_file.find('.') - input_position;
-        number_of_hamiltonians = std::stoi(input_file.substr(input_position,length));
-        for(unsigned i = 0; i < number_of_hamiltonians; ++i)
-        {
-            initial_stack.push_back(new Hamiltonian(input_file, number_of_qubits, i));
-        }
-    }
-    else
-    {
-        initial_stack.push_back(new Hamiltonian(input_file, number_of_qubits));
-    }
-    return initial_stack;
 }

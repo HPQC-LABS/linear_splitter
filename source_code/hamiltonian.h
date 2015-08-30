@@ -19,38 +19,41 @@
 
 typedef std::pair<std::vector<unsigned>, int> edge_type;
 
+//hamiltonian.cpp
 class Hamiltonian{
 public:
-    Hamiltonian (std::string);
-    Hamiltonian (std::string, unsigned);
-    Hamiltonian (std::string, unsigned, unsigned);
-    Hamiltonian (int, int, int);
+    //Initializers
+    Hamiltonian (unsigned);
     Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>, unsigned);
+
+    void clean_hamiltonian(); 
+
+    //Public methods
     Hamiltonian* split_left();
     Hamiltonian* split_right();
     bool is_simple();
     unsigned cost();
+
+    //Number of qubits available
     unsigned qubits;
     
+    //Highest cost variable
+    unsigned split_variable;
+
+    std::size_t counter_;
     std::vector<edge_type> edges_;
     std::map<unsigned,unsigned> variables_;
 private:
-    void read_hamiltonian(std::string);
-    void read_hamiltonian(std::string,unsigned);
-    void initialize();
-    void sort_terms();
 
+    //C_H methods
     unsigned split_by_total_terms();
     unsigned split_by_total_cost();
-
-    int n_,m_,N_;
-    unsigned split_variable;
-    std::size_t counter_;
 };
 
-std::vector<Hamiltonian*> initialize_multiple(std::string, unsigned);
+//split.cpp
+std::vector<Hamiltonian*> read_file(std::string, unsigned);
 
-bool all_nodes_are_simple(std::vector<bool>);
+//read.cpp
 unsigned split(std::vector<Hamiltonian*>,unsigned);
 
 #endif

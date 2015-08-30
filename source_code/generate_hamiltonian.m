@@ -17,5 +17,6 @@ coefficientMatrix=Join[variablesInTerm,{coefficients}\[Transpose],2];
 fname = "hamiltonians/H_"<>ToString@var[[1]]<>"_"<>ToString@var[[2]]<>"_"<>ToString@var[[3]]<>".txt";
 s = OpenWrite[fname];
 WriteLine[s,StringJoin@Riffle[ToString/@#," "]]&/@coefficientMatrix;
+WriteLine[s,"#"];
 Close[s];
 Print[fname];
