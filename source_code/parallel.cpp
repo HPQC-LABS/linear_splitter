@@ -20,8 +20,8 @@ void TelephoneCenter::resize(unsigned number_of_threads)
         emails[i].resize(nthreads);
         for(unsigned j = 0; j < nthreads; ++j)
         {
-            emails[i][j].first = false;
-            emails[i][j].second = NULL;
+            emails[i][j].first = 0;
+            emails[i][j].second = std::vector<Hamiltonian*>();
         }
 
     }
@@ -31,8 +31,8 @@ void TelephoneCenter::delete_sent_emails(int thread_number)
 {
     for(unsigned i = 0; i < nthreads; ++i)
     {
-        emails[i][thread_number].first = false;
-        emails[i][thread_number].second = NULL;
+        emails[i][thread_number].first = 0;
+        emails[i][thread_number].second = std::vector<Hamiltonian*>();
     }
 }
 
@@ -42,66 +42,89 @@ void TelephoneCenter::send_email(int thread_number, std::vector<Hamiltonian*>* v
     {
         if(number_of_emails_sent(thread_number)==0)
         {
-            /*
-            unsigned receiver,counter=0;
-            
-            //See resevoir sampling for explanation
-            for(unsigned i = 0; i < nthreads; ++i)
+            if(count_active_states()!=0)
             {
-                if(is_working[i])
+                /*
+                unsigned receiver,counter=0;
+                
+                //See resevoir sampling for explanation
+                for(unsigned i = 0; i < nthreads; ++i)
                 {
-                    ++counter;
-                    if(bernoulli(counter))
-                        receiver=i;
-                }
-            }
-            */
-            unsigned receiver, min=nthreads,current;
-            for(unsigned i = 0; i < nthreads; ++i)
-            {
-                if(is_working[i])
-                {
-                    current = number_of_emails_in_inbox(i);
-                    if(current <= min)
+                    if(is_working[i]==1)
                     {
-                        receiver = i;
-                        min = current;
+                        ++counter;
+                        if(bernoulli(counter))
+                            receiver=i;
                     }
                 }
+                */
+                unsigned receiver, min=nthreads,current;
+                for(unsigned i = 0; i < nthreads; ++i)
+                {
+                    if(is_working[i]==1)
+                    {
+                        current = number_of_emails_in_inbox(i);
+                        if(current <= min)
+                        {
+                            receiver = i;
+                            min = current;
+                        }
+                    }
+                }
+                emails[receiver][thread_number] = std::make_pair(1,*vector_location);
             }
-            emails[receiver][thread_number] = std::make_pair(true,vector_location);
         }
     }
 }
 
-void TelephoneCenter::transfer(int thread_number, int destination, std::vector<Hamiltonian*>* local_stack)
+bool TelephoneCenter::transfer(int thread_number, int destination, std::vector<Hamiltonian*>* local_stack)
 {
-    std::vector<Hamiltonian*>* request_stack = emails[thread_number][destination].second;
+    std::vector<Hamiltonian*>* request_stack = &emails[thread_number][destination].second;
     unsigned transfer_amount = std::floor(local_stack->size()/(1+number_of_emails_in_inbox(thread_number)));
     if(transfer_amount!=0)
     {
-        if(request_stack->size()==0)
+        /*
+        std::cout << "############INITIATING TRANSFER#################" << std::endl;
+        std::cout << "Emails: " << number_of_emails_in_inbox(thread_number) << std::endl;
+        std::cout << "Amount: " << transfer_amount << std::endl;
+        std::cout << thread_number << " - sender size before: " << local_stack->size() << std::endl;
+        std::cout << destination << " - receiver size before: " << request_stack->size() << std::endl;
+        */
+        #pragma omp critical 
         {
-            /*
-            std::cout << "############INITIATING TRANSFER#################" << std::endl;
-            std::cout << "Emails: " << number_of_emails_in_inbox(thread_number) << std::endl;
-            std::cout << "Amount: " << transfer_amount << std::endl;
-            std::cout << thread_number << " - sender size before: " << local_stack->size() << std::endl;
-            std::cout << destination << " - receiver size before: " << request_stack->size() << std::endl;
-            */
-            #pragma omp critical 
-            {
-                request_stack->insert(request_stack->end(),local_stack->begin(),local_stack->begin()+transfer_amount);
-                local_stack->erase(local_stack->begin(),local_stack->begin()+transfer_amount);
-            }
-            /*
-            std::cout << thread_number << " - sender size after: " << local_stack->size() << std::endl;
-            std::cout << destination << " - receiver size after: " << request_stack->size() << std::endl;
-            std::cout << "############TERMINATING TRANSFER################" << std::endl << std::endl;
-            */
+            request_stack->insert(request_stack->end(),local_stack->begin(),local_stack->begin()+transfer_amount);
+            local_stack->erase(local_stack->begin(),local_stack->begin()+transfer_amount);
+        }
+        /*
+        std::cout << thread_number << " - sender size after: " << local_stack->size() << std::endl;
+        std::cout << destination << " - receiver size after: " << request_stack->size() << std::endl;
+        std::cout << "############TERMINATING TRANSFER################" << std::endl << std::endl;
+        */
 
-            emails[thread_number][destination].first = false; 
-            emails[thread_number][destination].second = NULL; 
+        emails[thread_number][destination].first = -1; 
+        is_working[destination] = -1;
+        return true;
+    }
+    return false;
+}
+
+bool TelephoneCenter::has_reply(int tn)
+{
+    for(unsigned i = 0; i < nthreads; ++i)
+        if(emails[i][tn].first==-1)
+            return true;
+    return false;
+}
+
+void TelephoneCenter::accept_transfer(int tn, std::vector<Hamiltonian*>* local_stack)
+{
+    for(unsigned i = 0; i < nthreads; ++i)
+    {
+        if(emails[i][tn].first==-1)
+        {
+            (*local_stack)=emails[i][tn].second;
+            emails[i][tn].second.clear();
+            emails[i][tn].first = 0;
         }
     }
 }
@@ -110,7 +133,16 @@ unsigned TelephoneCenter::count_idle_states()
 {
     unsigned counter = 0;
     for(unsigned i = 0; i < nthreads; ++i)
-        if(!is_working[i])
+        if(is_working[i]==0)
+            ++counter;
+    return counter;
+}
+
+unsigned TelephoneCenter::count_active_states()
+{
+    unsigned counter = 0;
+    for(unsigned i = 0; i < nthreads; ++i)
+        if(is_working[i]==1)
             ++counter;
     return counter;
 }
@@ -119,7 +151,7 @@ unsigned TelephoneCenter::number_of_emails_in_inbox(int thread_number)
 {
     unsigned counter = 0;
     for(unsigned i = 0; i < nthreads; ++i)
-        if(emails[thread_number][i].first)
+        if(emails[thread_number][i].first==1)
             ++counter;
     return counter;
 }
@@ -128,7 +160,9 @@ unsigned TelephoneCenter::number_of_emails_sent(int thread_number)
 {
     unsigned counter = 0;
     for(unsigned i = 0; i < nthreads; ++i)
-        if(emails[i][thread_number].first)
+        if(emails[i][thread_number].first==1)
+            ++counter;
+        else if(emails[i][thread_number].first==-1)
             ++counter;
     return counter;
 }
@@ -136,7 +170,7 @@ unsigned TelephoneCenter::number_of_emails_sent(int thread_number)
 unsigned TelephoneCenter::check_first_email_sender(int thread_number)
 {
     for(unsigned i = 0; i < nthreads; ++i)
-        if(emails[thread_number][i].first)
+        if(emails[thread_number][i].first==1)
             return i;
     return nthreads;
 }
@@ -155,7 +189,11 @@ bool TelephoneCenter::bernoulli(unsigned n)
 bool TelephoneCenter::all_states_idle()
 {
     for(unsigned i = 0; i < nthreads; ++i)
-        if(is_working[i])
+    {
+        if(is_working[i]==1)
             return false;
+        if(is_working[i]==-1)
+            return false;
+    }
     return true;
 }
