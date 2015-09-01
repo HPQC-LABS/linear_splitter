@@ -3,14 +3,16 @@
 #ifndef PARALLEL_H_INCLUDED 
 #define PARALLEL_H_INCLUDED 
 
+#include "algorithms.h"
+#include "hamiltonian.h"
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <sstream>
 #include <random>
+#include <unistd.h>
 #include <omp.h>
-
-class Hamiltonian;
 
 typedef std::pair<bool,std::vector<Hamiltonian*>*> request;
 
@@ -23,9 +25,17 @@ public:
 
     std::vector<bool> is_working;
     std::vector<std::vector<request> > emails;
+    std::vector<std::vector<Hamiltonian*>*> telephone_book;
+    std::vector<unsigned> counters;
+
+    std::string file_name;
+    std::string stack_backup_file_name;
+    std::string counter_backup_file_name;
 
     bool all_states_idle();
+    bool backup_version;
 
+    void backup();
     void resize(unsigned);
     void send_email(int,std::vector<Hamiltonian*>*);
     void transfer(int,int,std::vector<Hamiltonian*>*);
@@ -34,6 +44,7 @@ public:
     unsigned check_first_email_sender(int);
     unsigned number_of_emails_in_inbox(int);
     unsigned number_of_emails_sent(int);
+    unsigned current_number_of_hamiltonians();
     unsigned end();
 private:
     unsigned nthreads;

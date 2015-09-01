@@ -22,4 +22,6 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& x)
 typedef std::map<unsigned,unsigned>::iterator map_iterator;
 map_iterator max_map_value(map_iterator, map_iterator);
 
+std::string get_filename(const std::string&);
+
 #endif

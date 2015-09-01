@@ -1,4 +1,5 @@
 #include "parallel.h"
+using std::to_string;
 
 TelephoneCenter::TelephoneCenter(){}
 
@@ -7,10 +8,46 @@ TelephoneCenter::TelephoneCenter(unsigned number_of_threads)
     resize(number_of_threads);
 }
 
+void TelephoneCenter::backup()
+{
+    counter_backup_file_name = "./backup/counter_v"+std::to_string(backup_version)+"_"+file_name;
+    stack_backup_file_name = "./backup/stack_v"+std::to_string(backup_version)+"_"+file_name;
+
+    std::ofstream counter_backup_file(counter_backup_file_name);
+    counter_backup_file << std::to_string(current_number_of_hamiltonians()) << std::endl;
+    counter_backup_file.close();
+
+    std::ofstream stack_backup_file(stack_backup_file_name);
+    for(unsigned j = 0; j < nthreads-1; ++j)
+    {
+        for(std::vector<Hamiltonian*>::iterator it = telephone_book[j]->begin(); it != telephone_book[j]->end(); ++it)
+        {
+            for(std::vector<edge_type>::iterator edge = (*it)->edges_.begin(); edge != (*it)->edges_.end(); ++edge)
+            {
+                stack_backup_file << edge->first << edge->second << std::endl;
+            }
+            stack_backup_file << "#" << std::endl;
+        }
+    }
+    stack_backup_file.close();
+
+    //Toggle version
+    backup_version = !backup_version;
+}
+
 void TelephoneCenter::resize(unsigned number_of_threads)
 {
     nthreads = number_of_threads;
     is_working.resize(nthreads);
+    telephone_book.resize(nthreads);
+    counters.resize(nthreads);
+    backup_version = false;
+
+    for(unsigned i = 0; i < nthreads; ++i)
+    {
+        counters[i] = 0;
+        telephone_book[i] = NULL;
+    }
 
     //The column of `emails` is the thread that is requesting work
     //and the row is the thread giving the work
@@ -69,6 +106,7 @@ void TelephoneCenter::send_email(int thread_number, std::vector<Hamiltonian*>* v
                     }
                 }
             }
+            #pragma omp critical
             emails[receiver][thread_number] = std::make_pair(true,vector_location);
         }
     }
@@ -158,4 +196,12 @@ bool TelephoneCenter::all_states_idle()
         if(is_working[i])
             return false;
     return true;
+}
+
+unsigned TelephoneCenter::current_number_of_hamiltonians()
+{
+    unsigned tmp = 0;
+    for(unsigned j = 0; j < nthreads; ++j)
+        tmp += counters[j];
+    return tmp;
 }

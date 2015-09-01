@@ -3,3 +3,5 @@
 graphs.nb
 split_reduc
 nohup.out
+/backup/counter_*.txt
+/backup/stack_*.txt

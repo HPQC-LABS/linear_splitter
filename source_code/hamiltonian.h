@@ -4,7 +4,6 @@
 #define HAMILTONIAN_H_INCLUDED 
 
 #include "algorithms.h"
-#include "parallel.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,7 +12,6 @@
 #include <map>
 #include <sstream>
 #include <cassert>
-#include <omp.h>
 #include <math.h>
 #include <unistd.h>
 
@@ -50,10 +48,7 @@ private:
     unsigned split_by_total_cost();
 };
 
-//split.cpp
-std::vector<Hamiltonian*> read_file(std::string, unsigned);
-
 //read.cpp
-unsigned split(std::vector<Hamiltonian*>,unsigned);
+std::vector<Hamiltonian*> read_file(std::string, unsigned);
 
 #endif
