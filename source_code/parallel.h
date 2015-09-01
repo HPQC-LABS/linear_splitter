@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <omp.h>
 
-typedef std::pair<bool,std::vector<Hamiltonian*>*> request;
+typedef std::pair<int,std::vector<Hamiltonian*> > request;
 
 //Class allowing communication between threads
 class TelephoneCenter
@@ -23,7 +23,7 @@ public:
     TelephoneCenter();
     TelephoneCenter(unsigned);
 
-    std::vector<bool> is_working;
+    std::vector<int> is_working;
     std::vector<std::vector<request> > emails;
     std::vector<std::vector<Hamiltonian*>*> telephone_book;
     std::vector<unsigned> counters;
@@ -34,17 +34,20 @@ public:
 
     bool all_states_idle();
     bool backup_version;
+    bool transfer(int,int,std::vector<Hamiltonian*>*);
+    bool has_reply(int);
 
     void backup();
     void resize(unsigned);
     void send_email(int,std::vector<Hamiltonian*>*);
-    void transfer(int,int,std::vector<Hamiltonian*>*);
+    void accept_transfer(int, std::vector<Hamiltonian*>*);
     void delete_sent_emails(int);
 
     unsigned check_first_email_sender(int);
     unsigned number_of_emails_in_inbox(int);
     unsigned number_of_emails_sent(int);
     unsigned current_number_of_hamiltonians();
+    unsigned count_active_states();
     unsigned end();
 private:
     unsigned nthreads;

@@ -24,7 +24,7 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
             std::cout << "Initializing " << active_threads << " worker thread(s) and 1 backup thread" << std::endl;
 
             gmail.resize(active_threads+1);
-            gmail.is_working[tn] = true;
+            gmail.is_working[tn] = 1;
 
             tstack = stack;
             backup_thread = active_threads;
@@ -73,13 +73,23 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
                 //Actual splitting algorithm
                 if(tstack.size()==0)
                 {
-                    usleep(1000000);
-                    gmail.is_working[tn] = false;
-                    gmail.send_email(tn,&tstack);
+                    if(gmail.has_reply(tn))
+                    {
+                        gmail.accept_transfer(tn,&tstack);
+                        #pragma omp flush (gmail)
+                        gmail.is_working[tn] = 1;
+                    }
+                    else
+                    {
+                        usleep(1000000);
+                        if(gmail.is_working[tn]!=-1)
+                            gmail.is_working[tn] = 0;
+                        gmail.send_email(tn,&tstack);
+                    }
                 }
                 else if(tstack.back()->is_simple())
                 {
-                    gmail.is_working[tn] = true;
+                    gmail.is_working[tn] = 1;
                     thread_counter++;
                     gmail.counters[tn]++;
                     delete tstack.back();
@@ -88,7 +98,7 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
                 }
                 else
                 {
-                    gmail.is_working[tn] = true;
+                    gmail.is_working[tn] = 1;
                     temp_pointer = tstack.back();
                     tstack.pop_back();
                     tstack.push_back(temp_pointer->split_right());
@@ -99,9 +109,12 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
                     request_node=gmail.check_first_email_sender(tn);
                     if(request_node!=gmail.end())
                     {
-                        if(tstack.size()>1)
+                        if(tstack.size()>5)
                         {
-                            gmail.transfer(tn,request_node,&tstack);
+                            if(gmail.transfer(tn,request_node,&tstack))
+                            {
+                                #pragma omp flush (gmail)
+                            }
                         }
                     }
 
@@ -114,4 +127,3 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
     }
     return number_of_hamiltonians;
 }
-
