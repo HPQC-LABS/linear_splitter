@@ -31,6 +31,7 @@ public:
     Hamiltonian* split_right();
     bool is_simple();
     unsigned cost();
+    unsigned ishikawa_cost();
 
     //Number of qubits available
     unsigned qubits;
@@ -46,6 +47,7 @@ private:
     //C_H methods
     unsigned split_by_total_terms();
     unsigned split_by_total_cost();
+    unsigned split_by_ishikawa_cost();
 };
 
 //read.cpp

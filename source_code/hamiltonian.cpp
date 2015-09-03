@@ -20,7 +20,7 @@ Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned
     for(map_iterator it = variables_.begin(); it!=variables_.end(); ++it)
         it -> second = 0;
 
-    split_variable = split_by_total_cost();
+    split_variable = split_by_ishikawa_cost();
 }
 
 void Hamiltonian::clean_hamiltonian()
@@ -34,7 +34,7 @@ void Hamiltonian::clean_hamiltonian()
         variables_[i] = 0;
     
     //Calculate highest cost variable
-    split_variable = split_by_total_cost();
+    split_variable = split_by_ishikawa_cost();
 }
 
 //Split functions
@@ -90,7 +90,7 @@ Hamiltonian* Hamiltonian::split_right()
 //C(H) functions
 bool Hamiltonian::is_simple()
 {
-    if(cost() <= qubits)
+    if(ishikawa_cost() <= qubits)
         return true;
     return false;
 }
@@ -104,6 +104,25 @@ unsigned Hamiltonian::cost()
     for(unsigned j = 0; j < edges_.size(); ++j)
         if(edges_[j].first.size()>2)
             h_cost += edges_[j].first.size()-2;
+    return h_cost; 
+}
+
+unsigned Hamiltonian::ishikawa_cost()
+{
+    unsigned h_cost = 0;
+    for(unsigned j = 0; j < variables_.size(); ++j)
+        if(variables_[j]>0)
+            ++h_cost;
+    for(unsigned j = 0; j < edges_.size(); ++j)
+    {
+        if(edges_[j].first.size()>2)
+        {
+            if(edges_[j].second<0)
+                h_cost += 1;
+            else
+                h_cost += std::floor((edges_[j].first.size()-1)/2);
+        }
+    }
     return h_cost; 
 }
 
@@ -125,6 +144,26 @@ unsigned Hamiltonian::split_by_total_cost()
                 ++variables_[*a];
             if(edges_[j].first.size()>=2)
                 variables_[*a] += edges_[j].first.size() - 2 + 1;
+        }
+    }
+    return max_map_value(variables_.begin(), variables_.end()) -> first; 
+}
+
+unsigned Hamiltonian::split_by_ishikawa_cost()
+{
+    for(unsigned j = 0; j < edges_.size(); ++j)
+    {
+        for(std::vector<unsigned>::iterator a = edges_[j].first.begin(); a != edges_[j].first.end(); ++a)
+        {
+            if(variables_[*a]==0)
+                ++variables_[*a];
+            if(edges_[j].first.size()>2)
+            {
+                if(edges_[j].second<0)
+                    variables_[*a] += 1;
+                else
+                    variables_[*a] += std::floor((edges_[j].first.size()-1)/2);
+            }
         }
     }
     return max_map_value(variables_.begin(), variables_.end()) -> first; 
