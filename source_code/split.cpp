@@ -47,6 +47,7 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
                 if(tn == active_threads)
                 {
                     #pragma omp critical
+                    std::cout << "Writing to files" << std::endl;
                     gmail.backup();
                     std::cout << "Backup complete" << std::endl;
                     gmail.is_working[backup_thread]= false;
