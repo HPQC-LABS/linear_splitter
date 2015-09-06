@@ -1,7 +1,7 @@
 #include "split.h"
 
 //Splitting algorithm
-unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsigned backup_threshold, std::string file_name)
+unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsigned backup_threshold, unsigned transfer_threshold, std::string file_name)
 {
     std::vector<Hamiltonian*> tstack;
     std::vector<Hamiltonian*>* request_stack;
@@ -110,7 +110,7 @@ unsigned split(std::vector<Hamiltonian*> stack ,unsigned number_of_threads, unsi
                     request_node=gmail.check_first_email_sender(tn);
                     if(request_node!=gmail.end())
                     {
-                        if(tstack.size()>5)
+                        if(tstack.size() >= transfer_threshold)
                         {
                             if(gmail.transfer(tn,request_node,&tstack))
                             {

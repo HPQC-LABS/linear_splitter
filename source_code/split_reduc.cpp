@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 {
     std::vector<std::string> args(argv + 1, argv + argc);
 
-    unsigned number_of_threads = 8, number_of_qubits = 2048, backup_threshold = 100000;
+    unsigned number_of_threads = 8, number_of_qubits = 2048, backup_threshold = 100000, transfer_threshold = 5;
 
     std::vector<std::string>::iterator qubit_flag = std::find(args.begin(),args.end(),"-q");
     if(qubit_flag!=args.end())
@@ -30,6 +30,12 @@ int main(int argc, char* argv[])
             if(0<std::stoi(*(++backup_flag)))
                 backup_threshold = std::stoi(*backup_flag);
 
+    std::vector<std::string>::iterator transfer_flag = std::find(args.begin(),args.end(),"-tt");
+    if(transfer_flag!=args.end())
+        if(transfer_flag+1!=args.end())
+            if(0<std::stoi(*(++transfer_flag)))
+                transfer_threshold = std::stoi(*transfer_flag);
+
     if(argc >= 2)
     {
         //Read file
@@ -45,7 +51,7 @@ int main(int argc, char* argv[])
         std::clock_t start;
         start = std::clock();
 
-        unsigned n = split(stack,number_of_threads,backup_threshold,input_file);
+        unsigned n = split(stack,number_of_threads,backup_threshold,transfer_threshold,input_file);
 
         std::cout << "#####################" << std::endl;
         std::cout << "Input file: " << input_file << std::endl;

@@ -6,6 +6,6 @@
 #include "parallel.h"
 #include "hamiltonian.h"
 
-unsigned split(std::vector<Hamiltonian*>,unsigned,unsigned,std::string);
+unsigned split(std::vector<Hamiltonian*>,unsigned,unsigned,unsigned,std::string);
 
 #endif
