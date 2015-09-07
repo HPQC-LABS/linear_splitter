@@ -21,8 +21,8 @@ typedef std::pair<std::vector<unsigned>, int> edge_type;
 class Hamiltonian{
 public:
     //Initializers
-    Hamiltonian (unsigned);
-    Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>, unsigned);
+    Hamiltonian (unsigned, unsigned);
+    Hamiltonian (std::vector<edge_type>,std::map<unsigned,unsigned>, unsigned, unsigned);
 
     void clean_hamiltonian(); 
 
@@ -35,6 +35,7 @@ public:
 
     //Number of qubits available
     unsigned qubits;
+    unsigned max_interaction;
     
     //Highest cost variable
     unsigned split_variable;

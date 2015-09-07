@@ -1,11 +1,11 @@
 #include "hamiltonian.h"
 
-std::vector<Hamiltonian*> read_file(std::string input_file, unsigned qubits)
+std::vector<Hamiltonian*> read_file(std::string input_file, unsigned qubits, unsigned max_interaction)
 {
     std::ifstream in(input_file);
     assert(in);
 
-    Hamiltonian* h = new Hamiltonian(qubits);
+    Hamiltonian* h = new Hamiltonian(qubits, max_interaction);
     std::vector<Hamiltonian*> initial_stack;
     std::map<std::string,unsigned> index;
 
@@ -46,7 +46,7 @@ std::vector<Hamiltonian*> read_file(std::string input_file, unsigned qubits)
             index.clear();
             h->clean_hamiltonian();
             initial_stack.push_back(h);
-            h = new Hamiltonian(qubits);
+            h = new Hamiltonian(qubits, max_interaction);
         }
     }
     in.close();

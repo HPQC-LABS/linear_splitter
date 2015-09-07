@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 {
     std::vector<std::string> args(argv + 1, argv + argc);
 
-    unsigned number_of_threads = 8, number_of_qubits = 2048, backup_threshold = 100000, transfer_threshold = 5;
+    unsigned number_of_threads = 8, number_of_qubits = 2048, backup_threshold = 100000, transfer_threshold = 5, max_interaction = 2;
 
     std::vector<std::string>::iterator qubit_flag = std::find(args.begin(),args.end(),"-q");
     if(qubit_flag!=args.end())
@@ -36,11 +36,17 @@ int main(int argc, char* argv[])
             if(0<std::stoi(*(++transfer_flag)))
                 transfer_threshold = std::stoi(*transfer_flag);
 
+    std::vector<std::string>::iterator interaction_flag = std::find(args.begin(),args.end(),"-i");
+    if(interaction_flag!=args.end())
+        if(interaction_flag+1!=args.end())
+            if(0<std::stoi(*(++interaction_flag)))
+                max_interaction = std::stoi(*interaction_flag);
+
     if(argc >= 2)
     {
         //Read file
         const std::string input_file(argv[1]);
-        std::vector<Hamiltonian*> stack = read_file(input_file,number_of_qubits);
+        std::vector<Hamiltonian*> stack = read_file(input_file,number_of_qubits, max_interaction);
         /*
         for(unsigned j = 0; j < stack.size(); ++j)
             for(unsigned k = 0; k < stack[j]->edges_.size(); ++k)

@@ -2,15 +2,17 @@
 using std::to_string;
 
 //Initializers
-Hamiltonian::Hamiltonian(unsigned number_of_qubits) 
+Hamiltonian::Hamiltonian(unsigned number_of_qubits, unsigned max_interaction_input) 
 {
     qubits=number_of_qubits;
+    max_interaction = max_interaction_input;
     counter_=0;
 }
 
-Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned> variables, unsigned number_of_qubits)
+Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned> variables, unsigned number_of_qubits, unsigned max_interaction_input)
 {
     qubits = number_of_qubits;
+    max_interaction = max_interaction_input;
     edges_ = edges;
     for(unsigned i = 0; i < edges_.size(); ++i)
         std::sort(edges_[i].first.begin(),edges_[i].first.end());
@@ -20,7 +22,10 @@ Hamiltonian::Hamiltonian(std::vector<edge_type> edges,std::map<unsigned,unsigned
     for(map_iterator it = variables_.begin(); it!=variables_.end(); ++it)
         it -> second = 0;
 
-    split_variable = split_by_ishikawa_cost();
+    if(max_interaction == 2)
+        split_variable = split_by_ishikawa_cost();
+    else
+        split_variable = split_by_total_cost();
 }
 
 void Hamiltonian::clean_hamiltonian()
@@ -34,7 +39,10 @@ void Hamiltonian::clean_hamiltonian()
         variables_[i] = 0;
     
     //Calculate highest cost variable
-    split_variable = split_by_ishikawa_cost();
+    if(max_interaction == 2)
+        split_variable = split_by_ishikawa_cost();
+    else
+        split_variable = split_by_total_cost();
 }
 
 //Split functions
@@ -51,7 +59,7 @@ Hamiltonian* Hamiltonian::split_left()
         }
     temp_variables.erase(split_variable);
 
-    return new Hamiltonian(temp_edges,temp_variables, qubits);
+    return new Hamiltonian(temp_edges,temp_variables, qubits, max_interaction);
 }
 
 Hamiltonian* Hamiltonian::split_right()
@@ -84,14 +92,22 @@ Hamiltonian* Hamiltonian::split_right()
         }
     }
     temp_variables.erase(split_variable);
-    return new Hamiltonian(temp_edges,temp_variables,qubits);
+    return new Hamiltonian(temp_edges,temp_variables,qubits, max_interaction);
 }
 
 //C(H) functions
 bool Hamiltonian::is_simple()
 {
-    if(ishikawa_cost() <= qubits)
-        return true;
+    if(max_interaction==2)
+    {
+        if(ishikawa_cost() <= qubits)
+            return true;
+    }
+    else
+    {
+        if(cost() <= qubits)
+            return true;
+    }
     return false;
 }
 
@@ -102,8 +118,13 @@ unsigned Hamiltonian::cost()
         if(variables_[j]>0)
             ++h_cost;
     for(unsigned j = 0; j < edges_.size(); ++j)
-        if(edges_[j].first.size()>2)
-            h_cost += edges_[j].first.size()-2;
+        if(edges_[j].first.size()>max_interaction)
+        {
+            if(edges_[j].second<0)
+                h_cost += 1;
+            else
+                h_cost += edges_[j].first.size()-max_interaction;
+        }
     return h_cost; 
 }
 
@@ -142,8 +163,13 @@ unsigned Hamiltonian::split_by_total_cost()
         {
             if(variables_[*a]==0)
                 ++variables_[*a];
-            if(edges_[j].first.size()>=2)
-                variables_[*a] += edges_[j].first.size() - 2 + 1;
+            if(edges_[j].first.size()>=max_interaction)
+            {
+                if(edges_[j].second<0)
+                    variables_[*a] += 1;
+                else
+                    variables_[*a] += edges_[j].first.size() - max_interaction + 1;
+            }
         }
     }
     return max_map_value(variables_.begin(), variables_.end()) -> first; 
