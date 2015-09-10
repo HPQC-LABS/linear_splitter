@@ -52,6 +52,6 @@ private:
 };
 
 //read.cpp
-std::vector<Hamiltonian*> read_file(std::string, unsigned);
+std::vector<Hamiltonian*> read_file(std::string, unsigned, unsigned);
 
 #endif
