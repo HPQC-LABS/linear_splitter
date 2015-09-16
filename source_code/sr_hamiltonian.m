@@ -19,7 +19,8 @@ r[4,5]=r[5,4]=25;
 
 partitionAt[list_,p_]:=Part[list,#]&/@Span@@@({1,0}+#&/@Partition[{0}~Join~p,2,1])
 makeRules[list_]:=Module[{signs=(Sign@list+1)/2},Flatten[Thread/@Thread[a@@@Subsets[#,{2}]&/@partitionAt[Range@Total@Abs@list,Accumulate@Abs@list]->signs]]]
-findNext[m_,n_,N_]:=Part[Flatten[Delete[Reverse/@Reverse@Table[{i,j},{i,2,m},{j,2,Min[n,i]}],{1,1}],1],FirstPosition[Flatten[Delete[Reverse/@Reverse@Table[r[i,j]<=N,{i,2,m},{j,2,Min[n,i]}],{1,1}],1],True]][[1]]
+findNext[m_,n_,N_]:=Part[Flatten[Delete[Reverse/@Reverse@Table[{i,j},{i,2,m},{j,2,Min[n,i]}],{1,1}],1],FirstPosition[Flatten[Delete[Reverse/@Reverse@Table[r[i,j]<=N,{i,2,m},{j,2,Min[n,i]}],{1,1}],1],True]][[1]]/;m>n
+findNext[m_,n_,N_]:=Part[Flatten[Delete[Reverse/@Reverse@Table[{j,i},{i,2,n},{j,2,Min[m,i]}],{1,1}],1],FirstPosition[Flatten[Delete[Reverse/@Reverse@Table[r[j,i]<=N,{i,2,n},{j,2,Min[m,i]}],{1,1}],1],True]][[1]]/;m<=n
 split[m_,n_,N_]:=Module[{stack={{}},tmp,left,right,splits={}},
 	While[
 		Length@stack>0,
