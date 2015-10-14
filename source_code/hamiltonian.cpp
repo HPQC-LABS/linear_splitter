@@ -82,7 +82,8 @@ Hamiltonian* Hamiltonian::split_right()
             if(j!=i)
             {
                 temp_edges[j].second += temp_edges[i].second;
-                temp_edges.erase(temp_edges.begin()+i); if(temp_edges[j].second == 0)
+                temp_edges.erase(temp_edges.begin()+i); 
+                if(temp_edges[j].second == 0)
                 {
                     temp_edges.erase(temp_edges.begin()+j);
                     --i;
